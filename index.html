@@ -68,7 +68,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13.5px}
 <body>
 <header>
 <h1>วางแผนบินทำแผนที่ DJI Mini 4 Pro</h1>
-<p>v0.2 · วาดขอบเขตบนภาพดาวเทียม คำนวณเส้นบิน ตรวจเงื่อนไข วางหมุด GCP และสร้างไฟล์ KMZ สำหรับ DJI Fly · เปิดจากไฟล์ในเครื่องหรือ GitHub Pages (ต้องมีอินเทอร์เน็ตสำหรับแผนที่)</p>
+<p>v0.2.1 · วาดขอบเขตบนภาพดาวเทียม คำนวณเส้นบิน ตรวจเงื่อนไข วางหมุด GCP และสร้างไฟล์ KMZ สำหรับ DJI Fly · เปิดจากไฟล์ในเครื่องหรือ GitHub Pages (ต้องมีอินเทอร์เน็ตสำหรับแผนที่)</p>
 </header>
 <main>
 
@@ -102,6 +102,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13.5px}
 <div style="display:flex;gap:4px;margin-top:4px"><button id="fCross" style="flex:1;min-height:30px;padding:2px;font-size:12px">บินไขว้: ปิด</button><button id="fFit" style="flex:1;min-height:30px;padding:2px;font-size:12px">ซูมพอดี</button></div>
 <div id="fStat" style="margin-top:6px;font-size:11.5px;color:#5B6672">–</div>
 </div></div>
+<div id="mapMsg" class="err" style="margin-top:6px"></div>
 <p class="hint">แตะ "วาดขอบเขต" แล้วแตะบนแผนที่ทีละมุม แตะจุดแรกซ้ำเพื่อปิดรูป · "แก้จุด" ลากย้ายมุมได้ · เส้นบิน จุดถ่ายภาพ และหมุด GCP จะแสดงทับแผนที่หลังคำนวณ</p>
 <details><summary>วิธีอื่น: วางพิกัด / เปิด KML / สร้างสี่เหลี่ยม</summary>
 <label>วิธี ก: วางพิกัดมุมพื้นที่ทีละบรรทัด (lat, lon) เรียงตามลำดับรอบพื้นที่ คัดลอกจาก Google Maps ได้</label>
@@ -284,6 +285,7 @@ function readInputs(){
 
 function compute(){
  const polyErr=$('polyErr'),valErr=$('valErr');polyErr.textContent='';valErr.textContent='';state.ok=false;$('btnExport').disabled=true;
+ if(!$('poly').value.trim()){return render(null);}
  const pr=parsePoly($('poly').value);if(pr.err){polyErr.textContent=pr.err;return render(null);}
  let pts=pr.pts;if(pts.length<3){polyErr.textContent='ต้องมีอย่างน้อย 3 จุด';return render(null);}
  if(!polyLayer||JSON.stringify(polyFromMap().map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]))!==JSON.stringify(pts.map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]))){syncPolyToMap(pts);if(!state.fitted){map.fitBounds(polyLayer.getBounds().pad(0.3));state.fitted=true;}}
@@ -291,8 +293,8 @@ function compute(){
  P=P.filter((p,i)=>i===0||dist(p,P[i-1])>=0.5);if(P.length>1&&dist(P[0],P[P.length-1])<0.5)P.pop();
  if(P.length<3){polyErr.textContent='จุดซ้ำกันมากเกินไป';return render(null);}
  if(selfIntersects(P)){polyErr.textContent='ขอบพื้นที่ตัดกันเอง ตรวจลำดับจุด';return render(null);}
- const A=area(P),rai=A/1600;if(rai<0.1||rai>50){polyErr.textContent='พื้นที่ '+rai.toFixed(2)+' ไร่ ต้องอยู่ระหว่าง 0.1–50 ไร่';return render(null);}
- const hp=parseLatLon($('home').value);if(!hp){polyErr.textContent='กรอกจุดขึ้นบิน';return render(null);}
+ const A=area(P),rai=A/1600;if(rai<0.05||rai>300){polyErr.textContent='พื้นที่ '+rai.toFixed(2)+' ไร่ ต้องอยู่ระหว่าง 0.05–300 ไร่ (พื้นที่ใหญ่ให้แบ่งเป็นแปลง)';return render(null);}
+ let hp=parseLatLon($('home').value);if(!hp){hp=pts[0];$('home').value=hp.lat.toFixed(6)+', '+hp.lon.toFixed(6);}
  const home=F.to(hp);
  const {inp,errs}=readInputs();if(errs.length){valErr.textContent=errs.join(' · ');return render(null);}
  const d=derive(inp);const plan=buildPlan(inp,P,home,d);const ck=checks(inp,d,plan);const gcp=gcpPlan(P,d,inp.mat);
@@ -301,7 +303,7 @@ function compute(){
  $('btnExport').disabled=!state.ok;render(state);save();}
 
 function render(s){
- const stats=$('stats'),cks=$('checks');planLayer.clearLayers();
+ const stats=$('stats'),cks=$('checks');planLayer.clearLayers();$('mapMsg').textContent=[$('polyErr').textContent,$('valErr').textContent].filter(Boolean).join(' · ')||(s?'':'ยังไม่มีขอบเขตพื้นที่: กด "วาดขอบเขต" แล้วแตะบนแผนที่อย่างน้อย 3 มุม แตะจุดแรกซ้ำเพื่อปิดรูป');
  if(!s){stats.innerHTML='';cks.innerHTML='<div class="hint">วาดขอบเขตบนแผนที่ (หรือกรอกข้อมูลส่วนที่ 1–2) ให้ครบ</div>';$('gcpTable').innerHTML='';$('wpmlPreview').textContent='';if(homeMarker){map.removeLayer(homeMarker);homeMarker=null;}vtxLayer.clearLayers();$('fStat').textContent='–';return;}
  const {d,plan,ck,gcp,F,home}=s;const LL=p=>{const l=F.from(p);return [l.lat,l.lon];};
  const cols=['#2F6DB5','#C9601F','#1F7A5A','#7B4FB5','#B3261E'];
