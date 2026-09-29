@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วางแผนบินทำแผนที่ Mini 4 Pro v0.2 (แผนที่ดาวเทียม)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600&family=Noto+Sans+Thai:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#EEF1F4;--card:#FFFFFF;--ink:#1B2430;--muted:#5B6672;--line:#D5DAE0;--soft:#F7F8FA;
+--blue:#2F6DB5;--blue-soft:#E8F0FA;--orange:#C9601F;--orange-soft:#FBF5F0;--green:#1F7A5A;--green-soft:#F1F8F5;--red:#B3261E;--red-soft:#FCEBEA}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141922;--card:#1C2330;--ink:#E7EBF0;--muted:#A3ADBA;--line:#333D4C;--soft:#232C3A;
+--blue:#7FB0EA;--blue-soft:#1E2E44;--orange:#F0A06A;--orange-soft:#3A2A1E;--green:#7FD1AE;--green-soft:#1E3529;--red:#F2A19B;--red-soft:#3D2222}}
+:root[data-theme="dark"]{--bg:#141922;--card:#1C2330;--ink:#E7EBF0;--muted:#A3ADBA;--line:#333D4C;--soft:#232C3A;
+--blue:#7FB0EA;--blue-soft:#1E2E44;--orange:#F0A06A;--orange-soft:#3A2A1E;--green:#7FD1AE;--green-soft:#1E3529;--red:#F2A19B;--red-soft:#3D2222}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai','Prompt',system-ui,sans-serif;font-size:15px;line-height:1.5}
+header{padding:20px 16px 12px;border-bottom:2px solid var(--ink)}
+h1{font-family:'Prompt',sans-serif;font-size:22px;font-weight:600;margin:0;line-height:1.2}
+header p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+main{max-width:720px;margin:0 auto;padding:12px 12px 120px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h2{font-family:'Prompt',sans-serif;font-size:17px;font-weight:500;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.num{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
+.num.o{background:var(--orange)}.num.g{background:var(--green)}.num.k{background:var(--ink);color:var(--bg)}
+label{display:block;font-size:13px;color:var(--muted);margin:8px 0 3px}
+input[type=text],input[type=number],textarea,select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;background:var(--soft);color:var(--ink);min-height:44px}
+textarea{min-height:96px;font-family:ui-monospace,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:8px;padding:10px 14px;min-height:44px;cursor:pointer}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:500}
+button.go{background:var(--green);border-color:var(--green);color:#fff;font-weight:500;width:100%;font-size:16px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.err{color:var(--red);font-size:13px;margin-top:4px}
+.hint{color:var(--muted);font-size:13px}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.stat div{background:var(--blue-soft);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-family:'Prompt',sans-serif;font-size:18px;font-weight:500;color:var(--blue)}
+.stat span{font-size:12px;color:var(--muted)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;margin-top:6px;font-size:13.5px}
+.chk.pass{background:var(--green-soft)}.chk.warn{background:var(--orange-soft)}.chk.fail{background:var(--red-soft)}
+.chk .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex-shrink:0}
+.pass .dot{background:var(--green)}.warn .dot{background:var(--orange)}.fail .dot{background:var(--red)}
+.chk button{min-height:32px;padding:4px 10px;font-size:13px;margin-left:auto}
+svg.map{width:100%;height:auto;background:var(--soft);border:1px solid var(--line);border-radius:8px;display:block}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left}
+.preset{background:var(--orange-soft);border:1px dashed var(--orange)}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--orange);color:#fff;margin-left:6px}
+.sticky{position:fixed;left:0;right:0;bottom:0;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--line)}
+.sticky div{max-width:720px;margin:0 auto}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;overflow-x:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:13.5px}
+#map{width:100%;height:420px;border:1px solid var(--line);border-radius:8px;z-index:0}
+.leaflet-container{font-family:inherit}
+.gcpLbl{background:#fff;border:1px solid #C9601F;border-radius:4px;padding:0 4px;font-size:11px;color:#C9601F;font-weight:500;white-space:nowrap}
+.modeon{background:var(--orange)!important;border-color:var(--orange)!important;color:#fff!important}
+.wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<header>
+<h1>วางแผนบินทำแผนที่ DJI Mini 4 Pro</h1>
+<p>v0.2 · วาดขอบเขตบนภาพดาวเทียม คำนวณเส้นบิน ตรวจเงื่อนไข วางหมุด GCP และสร้างไฟล์ KMZ สำหรับ DJI Fly · เปิดจากไฟล์ในเครื่องหรือ GitHub Pages (ต้องมีอินเทอร์เน็ตสำหรับแผนที่)</p>
+</header>
+<main>
+
+<section class="preset">
+<h2><span class="num o">T</span>ชุดตัวเลขบินทดสอบเบื้องต้น <span class="badge">แยกจากงานจริง</span></h2>
+<p class="hint">ค่าชุดนี้ใช้ตรวจว่าแอปคำนวณถูกต้อง (เฉลย: 5 เส้น, 80 จุด, ระยะทาง ≈ 980 ม.) พื้นที่และความสูงของงานจริงจะต่างจากนี้ ให้ตั้งค่าเองในส่วนที่ 1–2</p>
+<table><tr><th>รายการ</th><th>ค่า</th></tr>
+<tr><td>พื้นที่</td><td>สี่เหลี่ยม 120 × 80 ม. (6 ไร่) ด้านยาววางตามแนวตะวันออก-ตะวันตก</td></tr>
+<tr><td>GSD / ความสูง</td><td>2.0 ซม./px → h = 58 ม. (ปัดจากสูตร) หรือใช้ h = 60 ม. ตามเฉลย</td></tr>
+<tr><td>Overlap หน้า / ข้าง</td><td>80% / 80%</td></tr>
+<tr><td>ความเร็ว</td><td>5 m/s โหมดหยุดถ่ายทุกจุด</td></tr>
+<tr><td>จุดขึ้นบิน</td><td>มุมซ้ายล่างของพื้นที่ (ตะวันตกเฉียงใต้)</td></tr></table>
+<label>จุดศูนย์กลางพื้นที่ทดสอบ (lat, lon) ตัวอย่างค่าเริ่มต้น แก้ให้เป็นสนามจริงก่อนบิน</label>
+<input type="text" id="tCenter" value="13.7563, 100.5018">
+<div class="btns"><button class="primary" id="btnPreset">โหลดชุดทดสอบเข้าส่วนที่ 1–2</button><button id="btnSelfTest">รันตรวจสอบตัวเอง</button></div>
+<div id="selfTestOut" class="hint" style="margin-top:8px"></div>
+</section>
+
+<section>
+<h2><span class="num">1</span>ขอบเขตพื้นที่ (วาดบนแผนที่)</h2>
+<div class="btns" style="margin:0 0 8px"><button class="primary" id="btnDraw">วาดขอบเขต</button><button id="btnEdit">แก้จุด</button><button id="btnClear">ล้าง</button><button id="btnHomeMode">แตะตั้งจุดขึ้นบิน</button><button id="btnLocate">ไปตำแหน่ง GPS</button><button id="btnLayer">สลับดาวเทียม/ถนน</button></div>
+<div style="position:relative">
+<div id="map"></div>
+<button id="fToggle" style="position:absolute;right:10px;top:10px;z-index:600;min-height:36px;padding:4px 10px;font-size:13px;background:rgba(255,255,255,.95)">⚙ ตั้งค่าด่วน</button>
+<div id="fpanel" style="position:absolute;right:10px;top:52px;z-index:500;background:rgba(255,255,255,.94);border:1px solid #D5DAE0;border-radius:10px;padding:8px 10px;width:210px;font-size:12.5px;color:#1B2430;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+<div style="font-family:'Prompt',sans-serif;font-weight:500;font-size:13px;margin-bottom:4px">ตั้งค่าบินด่วน</div>
+<label style="margin:4px 0 0;font-size:11.5px;color:#5B6672">GSD <span id="fGsdV">2.0</span> ซม./px · h <span id="fHV">–</span> ม.</label><input type="range" id="fGsd" min="0.5" max="3" step="0.1" value="2.0" style="width:100%;min-height:24px;padding:0">
+<label style="margin:4px 0 0;font-size:11.5px;color:#5B6672">Overlap หน้า <span id="fFrontV">80</span>%</label><input type="range" id="fFront" min="60" max="90" step="5" value="80" style="width:100%;min-height:24px;padding:0">
+<label style="margin:4px 0 0;font-size:11.5px;color:#5B6672">Overlap ข้าง <span id="fSideV">80</span>%</label><input type="range" id="fSide" min="50" max="85" step="5" value="80" style="width:100%;min-height:24px;padding:0">
+<div style="display:flex;gap:4px;margin-top:6px"><button id="fRotL" style="flex:1;min-height:30px;padding:2px;font-size:12px">↺ 15°</button><button id="fAuto" style="flex:1;min-height:30px;padding:2px;font-size:12px">ทิศ auto</button><button id="fRotR" style="flex:1;min-height:30px;padding:2px;font-size:12px">↻ 15°</button></div>
+<div style="display:flex;gap:4px;margin-top:4px"><button id="fCross" style="flex:1;min-height:30px;padding:2px;font-size:12px">บินไขว้: ปิด</button><button id="fFit" style="flex:1;min-height:30px;padding:2px;font-size:12px">ซูมพอดี</button></div>
+<div id="fStat" style="margin-top:6px;font-size:11.5px;color:#5B6672">–</div>
+</div></div>
+<p class="hint">แตะ "วาดขอบเขต" แล้วแตะบนแผนที่ทีละมุม แตะจุดแรกซ้ำเพื่อปิดรูป · "แก้จุด" ลากย้ายมุมได้ · เส้นบิน จุดถ่ายภาพ และหมุด GCP จะแสดงทับแผนที่หลังคำนวณ</p>
+<details><summary>วิธีอื่น: วางพิกัด / เปิด KML / สร้างสี่เหลี่ยม</summary>
+<label>วิธี ก: วางพิกัดมุมพื้นที่ทีละบรรทัด (lat, lon) เรียงตามลำดับรอบพื้นที่ คัดลอกจาก Google Maps ได้</label>
+<textarea id="poly" placeholder="13.7560, 100.5010&#10;13.7560, 100.5021&#10;13.7567, 100.5021&#10;13.7567, 100.5010"></textarea>
+<label>วิธี ข: เปิดไฟล์ KML จาก Google Earth (ใช้รูปหลายเหลี่ยมรูปแรก)</label>
+<input type="file" id="kmlFile" accept=".kml,.kmz,.txt">
+<details><summary>วิธี ค: สร้างสี่เหลี่ยมจากจุดศูนย์กลาง</summary>
+<div class="row3"><div><label>กว้าง (ม.)</label><input type="number" id="rW" value="120"></div><div><label>ลึก (ม.)</label><input type="number" id="rD" value="80"></div><div><label>ทิศด้านกว้าง (°)</label><input type="number" id="rB" value="90"></div></div>
+<label>จุดศูนย์กลาง (lat, lon)</label><input type="text" id="rC" value="13.7563, 100.5018">
+<div class="btns"><button id="btnRect">สร้างสี่เหลี่ยม</button></div></details>
+</details>
+<div class="row"><div><label>จุดขึ้นบิน (lat, lon)</label><input type="text" id="home" placeholder="13.7560, 100.5010"></div><div><label>พื้นที่สูงกว่าจุดขึ้นบิน Δz (ม.)</label><input type="number" id="dz" value="0" step="1"></div></div>
+<div class="btns"><button id="btnHomeCorner">ใช้มุมแรกเป็นจุดขึ้นบิน</button><button id="btnHomeGps">ใช้ GPS มือถือ</button></div>
+<div id="polyErr" class="err"></div>
+<div id="polyInfo" class="hint"></div>
+</section>
+
+<section>
+<h2><span class="num">2</span>ค่าการบิน</h2>
+<div class="row"><div><label>กำหนดด้วย</label><select id="mode"><option value="gsd">GSD (ซม./px)</option><option value="h">ความสูงบิน (ม.)</option></select></div>
+<div><label id="valLabel">GSD (ซม./px) 0.5–3.0</label><input type="number" id="val" value="2.0" step="0.1"></div></div>
+<div class="row"><div><label>Overlap หน้า (%) 60–90</label><input type="number" id="front" value="80" step="5"></div><div><label>Overlap ข้าง (%) 50–85</label><input type="number" id="side" value="80" step="5"></div></div>
+<div class="row"><div><label>ทิศแนวบิน (° จากเหนือ) หรือ auto</label><input type="text" id="dir" value="auto"></div><div><label>ความเร็ว (m/s) 2–8</label><input type="number" id="speed" value="5" step="0.5"></div></div>
+<div class="row"><div><label>ระยะเผื่อปลายเส้น (ม.) หรือ auto (= H/2)</label><input type="text" id="margin" value="auto"></div><div><label>ระยะไกลสุดที่ยอมให้ (ม.)</label><input type="number" id="maxRange" value="500"></div></div>
+<div class="row"><div><label>บินไขว้สองทิศ</label><select id="cross"><option value="0">ไม่</option><option value="1">ใช่ (เพิ่มตารางที่ +90°)</option></select></div><div><label>ขนาดแผ่นเป้า GCP (ซม.)</label><input type="number" id="mat" value="60"></div></div>
+<div id="valErr" class="err"></div>
+</section>
+
+<section>
+<h2><span class="num">3</span>ผลคำนวณและผลตรวจ</h2>
+<p class="hint">เส้นบินแสดงบนแผนที่ในส่วนที่ 1 · สีต่างกัน = ไฟล์ส่วนต่างกัน · สามเหลี่ยมส้ม = GCP · เทา = จุดตรวจสอบ · บ้าน = จุดขึ้นบิน</p>
+<div class="stat" id="stats"></div>
+<div id="checks"></div>
+</section>
+
+<section>
+<h2><span class="num g">4</span>หมุด GCP และจุดตรวจสอบ</h2>
+<p class="hint">แอปเสนอตำแหน่งจากรูปร่างพื้นที่ (มุมร่นเข้า 10 ม. + กึ่งกลาง + กลางด้านยาว) กำหนดหมายเลขแผ่นเป้าให้ นำไปวัดพิกัดจริงด้วย Total Station แล้วกรอกในไฟล์ gcp_plan.csv</p>
+<div class="wrap"><table id="gcpTable"></table></div>
+</section>
+
+<section>
+<h2><span class="num g">5</span>ส่งออกไฟล์</h2>
+<label>รหัสภารกิจ</label><input type="text" id="mid" value="">
+<p class="hint">ได้ไฟล์ zip หนึ่งไฟล์ ข้างในมี KMZ แต่ละส่วน, preview.kml, params.csv, gcp_plan.csv และ README วิธีติดตั้งลง DJI Fly ถ้าเบราว์เซอร์บันทึก KMZ เป็น .zip ให้เปลี่ยนชื่อได้เลย เนื้อหาเหมือนกัน</p>
+<div id="exportMsg" class="hint"></div>
+<details><summary>ดูเนื้อหา waylines.wpml ของส่วนที่ 1</summary><pre id="wpmlPreview"></pre></details>
+</section>
+
+</main>
+<div class="sticky"><div><button class="go" id="btnExport" disabled>สร้างไฟล์ KMZ</button></div></div>
+
+<script>
+(function(){
+'use strict';
+const CAM={fov:82.1,pw:4032,ph:3024,name:'Mini 4 Pro'};
+const K={alt:90,wpMax:200,tMax:20*60,photoSec:2.5,climb:2.5};
+const $=id=>document.getElementById(id);
+const deg=Math.PI/180;
+let state={plan:null,ok:false};let timer=null;
+// ---------- Leaflet map ----------
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'});
+const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+const map=L.map('map',{zoomControl:true,tap:false}).setView([13.7563,100.5018],16);sat.addTo(map);let curLayer='sat';
+const drawn=new L.FeatureGroup().addTo(map);const planLayer=L.layerGroup().addTo(map);let homeMarker=null,homeMode=false,polyLayer=null;
+const homeIcon=L.divIcon({className:'',html:'<div style="width:16px;height:16px;background:#1B2430;border:2px solid #fff;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+const drawPoly=new L.Draw.Polygon(map,{allowIntersection:false,showArea:true,shapeOptions:{color:'#2F6DB5',weight:2,fillOpacity:.08},touchIcon:new L.DivIcon({iconSize:new L.Point(14,14),className:'leaflet-div-icon leaflet-editing-icon'})});
+let editHandler=null;
+function setPolyLayer(latlngs){drawn.clearLayers();polyLayer=L.polygon(latlngs,{color:'#2F6DB5',weight:2,fillOpacity:.08}).addTo(drawn);}
+function polyFromMap(){if(!polyLayer)return null;return polyLayer.getLatLngs()[0].map(p=>({lat:p.lat,lon:p.lng}));}
+map.on(L.Draw.Event.CREATED,e=>{drawn.clearLayers();polyLayer=e.layer;drawn.addLayer(polyLayer);labelVertices();const pts=polyFromMap();setPoly(pts);if(!$('home').value.trim()){$('home').value=pts[0].lat.toFixed(6)+', '+pts[0].lon.toFixed(6);}compute();});
+map.on(L.Draw.Event.EDITED,()=>{const pts=polyFromMap();if(pts)setPoly(pts);compute();});
+map.on('click',e=>{if(!homeMode)return;$('home').value=e.latlng.lat.toFixed(6)+', '+e.latlng.lng.toFixed(6);homeMode=false;$('btnHomeMode').classList.remove('modeon');compute();});
+$('btnDraw').addEventListener('click',()=>{if(editHandler){editHandler.disable();editHandler=null;}drawPoly.enable();});
+$('btnEdit').addEventListener('click',()=>{if(!polyLayer)return;if(editHandler){editHandler.save();editHandler.disable();editHandler=null;$('btnEdit').textContent='แก้จุด';const pts=polyFromMap();if(pts)setPoly(pts);compute();return;}editHandler=new L.EditToolbar.Edit(map,{featureGroup:drawn});editHandler.enable();$('btnEdit').textContent='เสร็จสิ้นการแก้';});
+$('btnClear').addEventListener('click',()=>{drawn.clearLayers();polyLayer=null;planLayer.clearLayers();$('poly').value='';compute();});
+$('btnHomeMode').addEventListener('click',()=>{homeMode=!homeMode;$('btnHomeMode').classList.toggle('modeon',homeMode);});
+$('btnLocate').addEventListener('click',()=>{map.locate({setView:true,maxZoom:18});});
+map.on('locationfound',e=>{L.circleMarker(e.latlng,{radius:6,color:'#2F6DB5'}).addTo(map);});
+$('btnLayer').addEventListener('click',()=>{if(curLayer==='sat'){map.removeLayer(sat);osm.addTo(map);curLayer='osm';}else{map.removeLayer(osm);sat.addTo(map);curLayer='sat';}});
+const vtxLayer=L.layerGroup().addTo(map);
+function labelVertices(){vtxLayer.clearLayers();const pts=polyFromMap();if(!pts)return;pts.forEach((p,i)=>{const ch=String.fromCharCode(65+(i%26));L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:'<div style="width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #1B2430;font:600 11px Prompt,sans-serif;display:flex;align-items:center;justify-content:center;color:#1B2430">'+ch+'</div>',iconSize:[20,20],iconAnchor:[10,10]}),interactive:false}).addTo(vtxLayer);});}
+function syncPolyToMap(pts){if(!pts||pts.length<3)return;setPolyLayer(pts.map(p=>[p.lat,p.lon]));labelVertices();}
+map.on(L.Draw.Event.EDITVERTEX,()=>{const pts=polyFromMap();if(pts){$('poly').value=pts.map(p=>p.lat.toFixed(6)+', '+p.lon.toFixed(6)).join('\n');labelVertices();clearTimeout(timer);timer=setTimeout(compute,120);}});
+const fp={gsd:$('fGsd'),front:$('fFront'),side:$('fSide')};
+fp.gsd.addEventListener('input',()=>{$('mode').value='gsd';$('val').value=fp.gsd.value;$('fGsdV').textContent=fp.gsd.value;syncLabel();debounced();});
+fp.front.addEventListener('input',()=>{$('front').value=fp.front.value;$('fFrontV').textContent=fp.front.value;debounced();});
+fp.side.addEventListener('input',()=>{$('side').value=fp.side.value;$('fSideV').textContent=fp.side.value;debounced();});
+function curBearing(){const v=$('dir').value.trim().toLowerCase();if(v!=='auto')return Number(v);return state.plan?state.plan.bearing:0;}
+$('fRotL').addEventListener('click',()=>{$('dir').value=String(((Math.round(curBearing())-15)%360+360)%360);compute();});
+$('fRotR').addEventListener('click',()=>{$('dir').value=String(((Math.round(curBearing())+15)%360+360)%360);compute();});
+$('fAuto').addEventListener('click',()=>{$('dir').value='auto';compute();});
+$('fCross').addEventListener('click',()=>{const on=$('cross').value!=='1';$('cross').value=on?'1':'0';$('fCross').textContent='บินไขว้: '+(on?'เปิด':'ปิด');compute();});
+$('fFit').addEventListener('click',()=>{if(polyLayer)map.fitBounds(polyLayer.getBounds().pad(0.3));});
+$('fToggle').addEventListener('click',()=>{const p=$('fpanel');p.style.display=p.style.display==='none'?'block':'none';});if(window.innerWidth<600)$('fpanel').style.display='none';
+function syncPanel(){const d=state.d,p=state.plan;if(!d){$('fStat').textContent='–';$('fHV').textContent='–';return;}$('fGsd').value=Math.min(3,Math.max(0.5,d.gsd)).toFixed(1);$('fGsdV').textContent=d.gsd.toFixed(2);$('fHV').textContent=d.h;$('fFront').value=Math.round(state.inp.front*100);$('fFrontV').textContent=Math.round(state.inp.front*100);$('fSide').value=Math.round(state.inp.side*100);$('fSideV').textContent=Math.round(state.inp.side*100);$('fCross').textContent='บินไขว้: '+(state.inp.cross?'เปิด':'ปิด');$('fStat').textContent=p.lines.length+' เส้น · '+p.photos+' ภาพ · '+(p.totalT/60).toFixed(1)+' นาที · '+p.parts.length+' ไฟล์ · ทิศ '+p.bearing.toFixed(0)+'°';}
+
+
+function parseLatLon(s){const m=String(s).trim().split(/[\s,;]+/).map(Number);if(m.length<2||m.some(isNaN))return null;return {lat:m[0],lon:m[1]};}
+function parsePoly(text){const pts=[];for(const line of text.split(/\n/)){const t=line.trim();if(!t)continue;const p=parseLatLon(t);if(!p)return {err:'บรรทัด "'+t+'" อ่านเป็น lat, lon ไม่ได้'};pts.push(p);}return {pts};}
+function parseKml(text){const m=text.match(/<Polygon[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/i)||text.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);if(!m)return null;const pts=m[1].trim().split(/\s+/).map(c=>{const a=c.split(',').map(Number);return {lat:a[1],lon:a[0]};}).filter(p=>!isNaN(p.lat)&&!isNaN(p.lon));if(pts.length>1&&Math.abs(pts[0].lat-pts[pts.length-1].lat)<1e-9&&Math.abs(pts[0].lon-pts[pts.length-1].lon)<1e-9)pts.pop();return pts;}
+
+function frame(pts){const lat0=pts.reduce((s,p)=>s+p.lat,0)/pts.length,lon0=pts.reduce((s,p)=>s+p.lon,0)/pts.length;const kx=111320*Math.cos(lat0*deg),ky=110574;
+return {lat0,lon0,to:p=>({x:(p.lon-lon0)*kx,y:(p.lat-lat0)*ky}),from:q=>({lat:lat0+q.y/ky,lon:lon0+q.x/kx})};}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function area(P){let s=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];s+=a.x*b.y-b.x*a.y;}return Math.abs(s)/2;}
+function segInt(a,b,c,d){const o=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);const o1=o(a,b,c),o2=o(a,b,d),o3=o(c,d,a),o4=o(c,d,b);return (o1*o2<0)&&(o3*o4<0);}
+function selfIntersects(P){const n=P.length;for(let i=0;i<n;i++)for(let j=i+2;j<n;j++){if(i===0&&j===n-1)continue;if(segInt(P[i],P[(i+1)%n],P[j],P[(j+1)%n]))return true;}return false;}
+function rot(p,a){const c=Math.cos(a),s=Math.sin(a);return {x:p.x*c-p.y*s,y:p.x*s+p.y*c};}
+function longestEdgeAngle(P){let best=0,bl=-1;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];const l=dist(a,b);if(l>bl){bl=l;best=Math.atan2(b.y-a.y,b.x-a.x);}}return best;}
+
+function derive(inp){
+ let h,gsd;const kG=100*2*Math.tan(CAM.fov/2*deg)*0.8/CAM.pw;
+ if(inp.mode==='gsd'){gsd=inp.val;h=Math.round((gsd/kG)*2)/2;}else{h=Math.round(inp.val*2)/2;}
+ gsd=kG*h;const D=2*h*Math.tan(CAM.fov/2*deg),W=0.8*D,H=0.6*D;
+ const Ls=W*(1-inp.side),Ps=H*(1-inp.front);const margin=inp.margin==='auto'?H/2:Number(inp.margin);
+ return {h,h_exec:h+inp.dz,gsd,D,W,H,Ls,Ps,margin,kG};}
+
+function gridLines(P,phi,Ls,Ps,margin){
+ const R=P.map(p=>rot(p,-phi));const ys=R.map(p=>p.y);const yMin=Math.min(...ys),yMax=Math.max(...ys);const ext=yMax-yMin;
+ const n=Math.max(1,Math.ceil(ext/Ls));const off=(ext-(n-1)*Ls)/2;const lines=[];
+ for(let k=0;k<n;k++){const y=yMin+off+k*Ls;const xs=[];
+  for(let i=0;i<R.length;i++){const a=R[i],b=R[(i+1)%R.length];if((a.y-y)*(b.y-y)<=0&&a.y!==b.y){xs.push(a.x+(y-a.y)*(b.x-a.x)/(b.y-a.y));}}
+  if(xs.length<2)continue;let x0=Math.min(...xs)-margin,x1=Math.max(...xs)+margin;const L=x1-x0;const seg=Math.max(1,Math.ceil(L/Ps));const step=L/seg;
+  const pts=[];for(let j=0;j<=seg;j++)pts.push({x:x0+j*step,y});if(lines.length%2===1)pts.reverse();
+  lines.push(pts.map(p=>rot(p,phi)));}
+ return lines;}
+
+function buildPlan(inp,P,home,d){
+ const phi=inp.dir==='auto'?longestEdgeAngle(P):(90-Number(inp.dir))*deg;
+ let lines=gridLines(P,phi,d.Ls,d.Ps,d.margin);
+ if(inp.cross)lines=lines.concat(gridLines(P,phi+Math.PI/2,d.Ls,d.Ps,d.margin));
+ const parts=[];let cur=null;
+ const lineTime=(ls,first)=>{let len=0,cnt=0,prev=null;for(const l of ls)for(const p of l){if(prev)len+=dist(prev,p);prev=p;cnt++;}
+  const transit=dist(home,ls[0][0])+dist(home,prev);return {len,cnt,transit,t:len/inp.speed+cnt*K.photoSec+(d.h_exec/K.climb)*2+transit/inp.speed};};
+ for(const l of lines){const chunks=[];for(let i=0;i<l.length;i+=K.wpMax)chunks.push(l.slice(i,i+K.wpMax));
+  for(const c of chunks){if(!cur){cur={lines:[c]};continue;}const trial=lineTime(cur.lines.concat([c]));
+   if(trial.cnt>K.wpMax||trial.t>K.tMax){parts.push(cur);cur={lines:[c]};}else cur.lines.push(c);}}
+ if(cur)parts.push(cur);
+ for(const p of parts){Object.assign(p,lineTime(p.lines));p.wps=[].concat(...p.lines);}
+ const all=[].concat(...parts.map(p=>p.wps));
+ const maxRange=Math.max(...all.map(p=>dist(home,p)));
+ const totalLen=parts.reduce((s,p)=>s+p.len,0),totalT=parts.reduce((s,p)=>s+p.t,0);
+ return {phi,bearing:((90-phi/deg)%360+360)%360,lines,parts,all,maxRange,totalLen,totalT,photos:all.length};}
+
+function checks(inp,d,plan){
+ const c=[];
+ c.push(d.h_exec<=K.alt?{s:'pass',m:'ความสูงสั่งโดรน '+d.h_exec.toFixed(1)+' ม. ≤ 90 ม.'}:{s:'fail',m:'ความสูง '+d.h_exec.toFixed(1)+' ม. เกิน 90 ม.',fix:'ลด GSD ให้พอดี',apply:()=>{$('mode').value='gsd';$('val').value=(d.kG*(K.alt-inp.dz)).toFixed(2);}});
+ const big=plan.parts.filter(p=>p.cnt>K.wpMax).length;
+ c.push(big?{s:'fail',m:'มีส่วนที่เกิน 200 จุด'}:{s:plan.parts.length>1?'warn':'pass',m:'waypoint รวม '+plan.photos+' จุด แบ่งเป็น '+plan.parts.length+' ไฟล์ (สูงสุด '+Math.max(...plan.parts.map(p=>p.cnt))+' จุดต่อไฟล์)'});
+ const tmax=Math.max(...plan.parts.map(p=>p.t));
+ c.push(tmax<=K.tMax?{s:'pass',m:'เวลาบินต่อไฟล์สูงสุด '+(tmax/60).toFixed(1)+' นาที ≤ 20 นาที'}:{s:'fail',m:'เวลาบินต่อไฟล์ '+(tmax/60).toFixed(1)+' นาที เกิน 20 นาที (เส้นเดียวยาวเกินไป)',fix:'เพิ่มความเร็ว',apply:()=>{$('speed').value=Math.min(8,inp.speed+1);}});
+ c.push(plan.maxRange<=inp.maxRange?{s:'pass',m:'จุดไกลสุดจากจุดขึ้นบิน '+plan.maxRange.toFixed(0)+' ม. ≤ '+inp.maxRange+' ม.'}:{s:'fail',m:'จุดไกลสุด '+plan.maxRange.toFixed(0)+' ม. เกิน '+inp.maxRange+' ม. ย้ายจุดขึ้นบินไปกลางพื้นที่หรือแบ่งพื้นที่'});
+ const w=[];if(plan.photos>600)w.push('ภาพ '+plan.photos+' ใบ ประมวลผลนาน');if(d.Ls<8)w.push('Ls '+d.Ls.toFixed(1)+' ม. overlap ข้างสูงเกินจำเป็น');if(d.gsd>inp.mat/15)w.push('GSD '+d.gsd.toFixed(2)+' ซม./px แผ่นเป้า '+inp.mat+' ซม. จะเล็กกว่า 15 พิกเซล');
+ c.push(w.length?{s:'warn',m:w.join(' · ')}:{s:'pass',m:'จำนวนภาพ ระยะแนวบิน และขนาดแผ่นเป้าเหมาะสม'});
+ return c;}
+
+function gcpPlan(P,d,mat){
+ const cx=P.reduce((s,p)=>s+p.x,0)/P.length,cy=P.reduce((s,p)=>s+p.y,0)/P.length;const C={x:cx,y:cy};const pts=[];
+ const add=(p,type)=>{if(pts.every(q=>dist(q,p)>=20))pts.push({x:p.x,y:p.y,type});};
+ for(const v of P){const l=dist(v,C);const t=Math.min(10/l,0.45);add({x:v.x+(C.x-v.x)*t,y:v.y+(C.y-v.y)*t},'GCP');}
+ add(C,'GCP');
+ for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];if(dist(a,b)>150){const m={x:(a.x+b.x)/2,y:(a.y+b.y)/2};const l=dist(m,C);add({x:m.x+(C.x-m.x)*(10/l),y:m.y+(C.y-m.y)*(10/l)},'GCP');}}
+ const g=pts.filter(p=>p.type==='GCP');let ck=0;
+ for(const v of g){if(ck>=4||v===g[g.length-1])break;const m={x:(v.x+C.x)/2,y:(v.y+C.y)/2};const before=pts.length;add(m,'Check');if(pts.length>before)ck++;}
+ pts.forEach((p,i)=>{p.id=i;p.mat=i;});return pts;}
+
+function readInputs(){
+ const errs=[];const inp={};
+ inp.mode=$('mode').value;inp.val=Number($('val').value);
+ if(inp.mode==='gsd'&&!(inp.val>=0.5&&inp.val<=3.0))errs.push('GSD ต้องอยู่ระหว่าง 0.5–3.0 ซม./px');
+ if(inp.mode==='h'&&!(inp.val>=15&&inp.val<=90))errs.push('ความสูงต้องอยู่ระหว่าง 15–90 ม.');
+ inp.front=Number($('front').value)/100;inp.side=Number($('side').value)/100;
+ if(!(inp.front>=0.6&&inp.front<=0.9))errs.push('Overlap หน้า 60–90%');if(!(inp.side>=0.5&&inp.side<=0.85))errs.push('Overlap ข้าง 50–85%');
+ const dir=$('dir').value.trim().toLowerCase();inp.dir=dir==='auto'?'auto':Number(dir);if(inp.dir!=='auto'&&!(inp.dir>=0&&inp.dir<360))errs.push('ทิศต้องเป็น auto หรือ 0–359');
+ inp.speed=Number($('speed').value);if(!(inp.speed>=2&&inp.speed<=8))errs.push('ความเร็ว 2–8 m/s');
+ const mg=$('margin').value.trim().toLowerCase();inp.margin=mg==='auto'?'auto':Number(mg);if(inp.margin!=='auto'&&!(inp.margin>=0&&inp.margin<=100))errs.push('ระยะเผื่อ 0–100 ม. หรือ auto');
+ inp.maxRange=Number($('maxRange').value)||500;inp.cross=$('cross').value==='1';inp.mat=Number($('mat').value)||60;inp.dz=Number($('dz').value)||0;
+ return {inp,errs};}
+
+function compute(){
+ const polyErr=$('polyErr'),valErr=$('valErr');polyErr.textContent='';valErr.textContent='';state.ok=false;$('btnExport').disabled=true;
+ const pr=parsePoly($('poly').value);if(pr.err){polyErr.textContent=pr.err;return render(null);}
+ let pts=pr.pts;if(pts.length<3){polyErr.textContent='ต้องมีอย่างน้อย 3 จุด';return render(null);}
+ if(!polyLayer||JSON.stringify(polyFromMap().map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]))!==JSON.stringify(pts.map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]))){syncPolyToMap(pts);if(!state.fitted){map.fitBounds(polyLayer.getBounds().pad(0.3));state.fitted=true;}}
+ const F=frame(pts);let P=pts.map(F.to);
+ P=P.filter((p,i)=>i===0||dist(p,P[i-1])>=0.5);if(P.length>1&&dist(P[0],P[P.length-1])<0.5)P.pop();
+ if(P.length<3){polyErr.textContent='จุดซ้ำกันมากเกินไป';return render(null);}
+ if(selfIntersects(P)){polyErr.textContent='ขอบพื้นที่ตัดกันเอง ตรวจลำดับจุด';return render(null);}
+ const A=area(P),rai=A/1600;if(rai<0.1||rai>50){polyErr.textContent='พื้นที่ '+rai.toFixed(2)+' ไร่ ต้องอยู่ระหว่าง 0.1–50 ไร่';return render(null);}
+ const hp=parseLatLon($('home').value);if(!hp){polyErr.textContent='กรอกจุดขึ้นบิน';return render(null);}
+ const home=F.to(hp);
+ const {inp,errs}=readInputs();if(errs.length){valErr.textContent=errs.join(' · ');return render(null);}
+ const d=derive(inp);const plan=buildPlan(inp,P,home,d);const ck=checks(inp,d,plan);const gcp=gcpPlan(P,d,inp.mat);
+ state={ok:!ck.some(c=>c.s==='fail'),inp,d,plan,ck,gcp,P,F,home,area:A,pts,fitted:true};
+ $('polyInfo').textContent='พื้นที่ '+rai.toFixed(2)+' ไร่ ('+A.toFixed(0)+' ตร.ม.) '+P.length+' มุม';
+ $('btnExport').disabled=!state.ok;render(state);save();}
+
+function render(s){
+ const stats=$('stats'),cks=$('checks');planLayer.clearLayers();
+ if(!s){stats.innerHTML='';cks.innerHTML='<div class="hint">วาดขอบเขตบนแผนที่ (หรือกรอกข้อมูลส่วนที่ 1–2) ให้ครบ</div>';$('gcpTable').innerHTML='';$('wpmlPreview').textContent='';if(homeMarker){map.removeLayer(homeMarker);homeMarker=null;}vtxLayer.clearLayers();$('fStat').textContent='–';return;}
+ const {d,plan,ck,gcp,F,home}=s;const LL=p=>{const l=F.from(p);return [l.lat,l.lon];};
+ const cols=['#2F6DB5','#C9601F','#1F7A5A','#7B4FB5','#B3261E'];
+ plan.parts.forEach((p,i)=>{L.polyline(p.wps.map(LL),{color:cols[i%5],weight:2,opacity:.95}).addTo(planLayer);if(plan.all.length<=400)p.wps.forEach(q=>L.circleMarker(LL(q),{radius:2.5,color:cols[i%5],fillColor:cols[i%5],fillOpacity:1,weight:1}).addTo(planLayer));});
+ const f=plan.all[0],l=plan.all[plan.all.length-1];
+ L.circleMarker(LL(f),{radius:7,color:'#fff',weight:2,fillColor:'#1F7A5A',fillOpacity:1}).bindTooltip('เริ่ม').addTo(planLayer);
+ L.circleMarker(LL(l),{radius:7,color:'#fff',weight:2,fillColor:'#B3261E',fillOpacity:1}).bindTooltip('จบ').addTo(planLayer);
+ if(homeMarker)map.removeLayer(homeMarker);homeMarker=L.marker(LL(home),{icon:homeIcon}).bindTooltip('จุดขึ้นบิน').addTo(map);
+ gcp.forEach(g=>{const c=g.type==='GCP'?'#C9601F':'#888';L.marker(LL(g),{icon:L.divIcon({className:'',html:'<div style="display:flex;flex-direction:column;align-items:center"><div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid '+c+'"></div><span class="gcpLbl">'+g.mat+'</span></div>',iconSize:[30,30],iconAnchor:[15,7]})}).addTo(planLayer);});
+ const S=(b,t)=>'<div><b>'+b+'</b><span>'+t+'</span></div>';
+ stats.innerHTML=S(d.gsd.toFixed(2),'GSD จริง (ซม./px)')+S(d.h+(s.inp.dz?' / '+d.h_exec:'') ,'h'+(s.inp.dz?' / h สั่งโดรน':'')+' (ม.)')+S(d.Ls.toFixed(1)+' / '+d.Ps.toFixed(1),'Ls / Ps (ม.)')
+  +S(plan.lines.length,'จำนวนเส้น')+S(plan.photos,'จำนวนภาพ / waypoint')+S(plan.totalLen.toFixed(0),'ระยะทางบิน (ม.)')
+  +S((plan.totalT/60).toFixed(1),'เวลารวม (นาที)')+S(plan.parts.length,'จำนวนไฟล์ / แบต')+S(plan.bearing.toFixed(0)+'°','ทิศแนวบิน');
+ cks.innerHTML=ck.map((c,i)=>'<div class="chk '+c.s+'"><span class="dot"></span><span>'+c.m+'</span>'+(c.fix?'<button data-fix="'+i+'">'+c.fix+'</button>':'')+'</div>').join('');
+ cks.querySelectorAll('button[data-fix]').forEach(b=>b.addEventListener('click',()=>{ck[Number(b.dataset.fix)].apply();compute();}));
+ $('gcpTable').innerHTML='<tr><th>แผ่นเลข</th><th>ชนิด</th><th>lat</th><th>lon</th></tr>'+gcp.map(g=>{const ll=F.from(g);return '<tr><td>'+g.mat+'</td><td>'+g.type+'</td><td>'+ll.lat.toFixed(6)+'</td><td>'+ll.lon.toFixed(6)+'</td></tr>';}).join('');
+ $('wpmlPreview').textContent=wpml(s,0).slice(0,4000)+'\n...';syncPanel();}
+
+function esc(v){return String(v);}
+function header(s,part){const now=Date.now();return '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.uav.com/wpmz/1.0.2">\n<Document>\n<wpml:author>fly</wpml:author>\n<wpml:createTime>'+now+'</wpml:createTime>\n<wpml:updateTime>'+now+'</wpml:updateTime>\n<wpml:missionConfig>\n<wpml:flyToWaylineMode>safely</wpml:flyToWaylineMode>\n<wpml:finishAction>goHome</wpml:finishAction>\n<wpml:exitOnRCLost>executeLostAction</wpml:exitOnRCLost>\n<wpml:executeRCLostAction>goBack</wpml:executeRCLostAction>\n<wpml:globalTransitionalSpeed>'+s.inp.speed+'</wpml:globalTransitionalSpeed>\n<wpml:droneInfo>\n<wpml:droneEnumValue>68</wpml:droneEnumValue>\n<wpml:droneSubEnumValue>0</wpml:droneSubEnumValue>\n</wpml:droneInfo>\n</wpml:missionConfig>\n';}
+function templateKml(s){return header(s)+'</Document>\n</kml>\n';}
+function wpml(s,pi){const part=s.plan.parts[pi];const h=s.d.h_exec.toFixed(1),v=s.inp.speed;let aid=0;
+ let x=header(s)+'<Folder>\n<wpml:templateId>0</wpml:templateId>\n<wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>\n<wpml:waylineId>0</wpml:waylineId>\n<wpml:distance>'+part.len.toFixed(1)+'</wpml:distance>\n<wpml:duration>'+part.t.toFixed(0)+'</wpml:duration>\n<wpml:autoFlightSpeed>'+v+'</wpml:autoFlightSpeed>\n';
+ part.wps.forEach((p,i)=>{const ll=s.F.from(p);
+  x+='<Placemark>\n<Point>\n<coordinates>\n'+ll.lon.toFixed(8)+','+ll.lat.toFixed(8)+'\n</coordinates>\n</Point>\n<wpml:index>'+i+'</wpml:index>\n<wpml:executeHeight>'+h+'</wpml:executeHeight>\n<wpml:waypointSpeed>'+v+'</wpml:waypointSpeed>\n<wpml:waypointHeadingParam>\n<wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>\n</wpml:waypointHeadingParam>\n<wpml:waypointTurnParam>\n<wpml:waypointTurnMode>toPointAndStopWithDiscontinuityCurvature</wpml:waypointTurnMode>\n<wpml:waypointTurnDampingDist>0</wpml:waypointTurnDampingDist>\n</wpml:waypointTurnParam>\n<wpml:useStraightLine>1</wpml:useStraightLine>\n<wpml:actionGroup>\n<wpml:actionGroupId>'+i+'</wpml:actionGroupId>\n<wpml:actionGroupStartIndex>'+i+'</wpml:actionGroupStartIndex>\n<wpml:actionGroupEndIndex>'+i+'</wpml:actionGroupEndIndex>\n<wpml:actionGroupMode>sequence</wpml:actionGroupMode>\n<wpml:actionTrigger>\n<wpml:actionTriggerType>reachPoint</wpml:actionTriggerType>\n</wpml:actionTrigger>\n';
+  if(i===0){x+='<wpml:action>\n<wpml:actionId>'+(aid++)+'</wpml:actionId>\n<wpml:actionActuatorFunc>gimbalRotate</wpml:actionActuatorFunc>\n<wpml:actionActuatorFuncParam>\n<wpml:gimbalRotateMode>absoluteAngle</wpml:gimbalRotateMode>\n<wpml:gimbalPitchRotateEnable>1</wpml:gimbalPitchRotateEnable>\n<wpml:gimbalPitchRotateAngle>-90</wpml:gimbalPitchRotateAngle>\n<wpml:gimbalRollRotateEnable>0</wpml:gimbalRollRotateEnable>\n<wpml:gimbalRollRotateAngle>0</wpml:gimbalRollRotateAngle>\n<wpml:gimbalYawRotateEnable>0</wpml:gimbalYawRotateEnable>\n<wpml:gimbalYawRotateAngle>0</wpml:gimbalYawRotateAngle>\n<wpml:gimbalRotateTimeEnable>0</wpml:gimbalRotateTimeEnable>\n<wpml:gimbalRotateTime>0</wpml:gimbalRotateTime>\n<wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>\n</wpml:actionActuatorFuncParam>\n</wpml:action>\n';}
+  x+='<wpml:action>\n<wpml:actionId>'+(aid++)+'</wpml:actionId>\n<wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc>\n<wpml:actionActuatorFuncParam>\n<wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>\n</wpml:actionActuatorFuncParam>\n</wpml:action>\n</wpml:actionGroup>\n</Placemark>\n';});
+ return x+'</Folder>\n</Document>\n</kml>\n';}
+
+function previewKml(s){const F=s.F;const c=p=>{const l=F.from(p);return l.lon.toFixed(7)+','+l.lat.toFixed(7)+',0';};
+ let k='<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>'+s.mid+'</name>';
+ k+='<Style id="a"><LineStyle><color>ffb56d2f</color><width>2</width></LineStyle><PolyStyle><color>2fb56d2f</color></PolyStyle></Style><Style id="p"><LineStyle><color>ff1f60c9</color><width>2</width></LineStyle></Style>';
+ k+='<Placemark><name>ขอบเขต</name><styleUrl>#a</styleUrl><Polygon><outerBoundaryIs><LinearRing><coordinates>'+s.P.concat([s.P[0]]).map(c).join(' ')+'</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>';
+ s.plan.parts.forEach((p,i)=>{k+='<Placemark><name>เส้นบิน ส่วนที่ '+(i+1)+'</name><styleUrl>#p</styleUrl><LineString><altitudeMode>relativeToGround</altitudeMode><coordinates>'+p.wps.map(q=>{const l=F.from(q);return l.lon.toFixed(7)+','+l.lat.toFixed(7)+','+s.d.h_exec;}).join(' ')+'</coordinates></LineString></Placemark>';});
+ k+='<Placemark><name>จุดขึ้นบิน</name><Point><coordinates>'+c(s.home)+'</coordinates></Point></Placemark>';
+ s.gcp.forEach(g=>{k+='<Placemark><name>'+g.type+' แผ่น '+g.mat+'</name><Point><coordinates>'+c(g)+'</coordinates></Point></Placemark>';});
+ return k+'</Document></kml>';}
+function paramsCsv(s){const d=s.d,p=s.plan;const rows=[['mission_id',s.mid],['date',new Date().toISOString().slice(0,10)],['camera',CAM.name],['area_m2',s.area.toFixed(0)],['area_rai',(s.area/1600).toFixed(2)],['gsd_cm_px',d.gsd.toFixed(3)],['h_m',d.h],['h_exec_m',d.h_exec],['dz_m',s.inp.dz],['front_overlap',s.inp.front],['side_overlap',s.inp.side],['direction_deg',p.bearing.toFixed(1)],['speed_ms',s.inp.speed],['capture_mode','stop'],['margin_m',d.margin.toFixed(1)],['cross_grid',s.inp.cross?1:0],['W_m',d.W.toFixed(2)],['H_m',d.H.toFixed(2)],['Ls_m',d.Ls.toFixed(2)],['Ps_m',d.Ps.toFixed(2)],['lines',p.lines.length],['photos',p.photos],['path_length_m',p.totalLen.toFixed(0)],['time_est_min',(p.totalT/60).toFixed(1)],['parts',p.parts.length],['max_range_m',p.maxRange.toFixed(0)],['gcp_count',s.gcp.filter(g=>g.type==='GCP').length],['check_count',s.gcp.filter(g=>g.type==='Check').length],['polygon',s.pts.map(q=>q.lat.toFixed(6)+' '+q.lon.toFixed(6)).join(';')]];return '\ufeffkey,value\n'+rows.map(r=>r.join(',')).join('\n');}
+function gcpCsv(s){return '\ufeffmat_id,type,lat_approx,lon_approx,N_utm47,E_utm47,Z_m,note\n'+s.gcp.map(g=>{const l=s.F.from(g);return g.mat+','+g.type+','+l.lat.toFixed(6)+','+l.lon.toFixed(6)+',,,,';}).join('\n');}
+function readme(s){return 'ภารกิจ '+s.mid+' ('+CAM.name+', RC-N2)\n\nไฟล์ในชุดนี้\n- '+s.plan.parts.map((p,i)=>s.mid+'_part'+(i+1)+'.kmz ('+p.cnt+' จุด, '+(p.t/60).toFixed(1)+' นาที)').join('\n- ')+'\n- '+s.mid+'_preview.kml เปิดใน Google Earth เพื่อตรวจเส้นบิน\n- '+s.mid+'_params.csv ค่าพารามิเตอร์ทั้งหมดสำหรับบันทึกวิจัย\n- '+s.mid+'_gcp_plan.csv ตำแหน่งหมุดเสนอแนะ กรอก N, E, Z หลังวัดด้วย Total Station (EPSG:32647)\n\nติดตั้งลง DJI Fly (Android)\n1. เปิด DJI Fly ต่อโดรน สร้างภารกิจ waypoint เปล่า 1 ภารกิจต่อ 1 ไฟล์ส่วน แล้วบันทึก\n2. ต่อมือถือกับคอมทาง USB เปิด Android/data/dji.go.v5/files/waypoint/\n3. เปิดโฟลเดอร์รหัสภารกิจที่เพิ่งสร้าง (ดูเวลาแก้ไขล่าสุด) ข้างในมีไฟล์ .kmz ชื่อรหัสเดียวกัน\n4. เปลี่ยนชื่อไฟล์ของเราให้ตรงกับชื่อนั้น แล้วคัดลอกทับ\n5. ปิด DJI Fly ให้สนิทแล้วเปิดใหม่ เปิดภารกิจ ตรวจว่าเส้นทางตรงกับตัวอย่างในแอป\n6. ตั้งความสูงกลับบ้าน (RTH) ไม่ต่ำกว่า '+s.d.h_exec+' ม. บินทดสอบ 2-3 จุดแรกก่อนปล่อยทั้งภารกิจ\n\nหมายเหตุ: ทดสอบครั้งแรกด้วยพื้นที่เล็กและเทียบโครงสร้างไฟล์กับภารกิจที่ DJI Fly สร้างเอง\n';}
+
+async function exportAll(){
+ const s=state;if(!s.ok)return;s.mid=($('mid').value.trim()||autoId());$('mid').value=s.mid;const msg=$('exportMsg');msg.textContent='กำลังสร้างไฟล์...';
+ try{const pkg=new JSZip();
+  for(let i=0;i<s.plan.parts.length;i++){const z=new JSZip();z.file('wpmz/template.kml',templateKml(s));z.file('wpmz/waylines.wpml',wpml(s,i));const blob=await z.generateAsync({type:'blob',compression:'STORE'});pkg.file(s.mid+'_part'+(i+1)+'.kmz',blob);}
+  pkg.file(s.mid+'_preview.kml',previewKml(s));pkg.file(s.mid+'_params.csv',paramsCsv(s));pkg.file(s.mid+'_gcp_plan.csv',gcpCsv(s));pkg.file('README.txt',readme(s));
+  const out=await pkg.generateAsync({type:'blob'});const name=s.mid+'_package.zip';
+  let dl=null;try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads');}catch(e){dl=null;}
+  if(dl){try{await dl.save({filename:name,data:out});msg.textContent='บันทึก '+name+' แล้ว ('+s.plan.parts.length+' ไฟล์ KMZ)';}catch(e){msg.textContent=e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ: '+(e&&e.message||e);}}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent='สร้าง '+name+' แล้ว ถ้าไม่มีอะไรเกิดขึ้น ให้เปิดแอปนี้จากไฟล์ HTML ในเครื่องแทน';}
+ }catch(e){msg.textContent='เกิดข้อผิดพลาด: '+(e&&e.message||e);}}
+function autoId(){const d=new Date();const p=n=>String(n).padStart(2,'0');return 'M-'+d.getFullYear()+'-'+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());}
+
+function rectFrom(center,w,dpt,bearing){const F=frame([center]);const c=F.to(center);const phi=(90-bearing)*deg;const ux={x:Math.cos(phi),y:Math.sin(phi)},uy={x:-Math.sin(phi),y:Math.cos(phi)};
+ const corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>({x:c.x+a*w/2*ux.x+b*dpt/2*uy.x,y:c.y+a*w/2*ux.y+b*dpt/2*uy.y}));return corners.map(F.from);}
+function setPoly(pts){$('poly').value=pts.map(p=>p.lat.toFixed(6)+', '+p.lon.toFixed(6)).join('\n');}
+
+function loadPreset(){const c=parseLatLon($('tCenter').value);if(!c){$('selfTestOut').textContent='พิกัดจุดศูนย์กลางไม่ถูกต้อง';return;}
+ const pts=rectFrom(c,120,80,90);setPoly(pts);$('home').value=pts[0].lat.toFixed(6)+', '+pts[0].lon.toFixed(6);
+ $('mode').value='h';$('val').value=60;$('front').value=80;$('side').value=80;$('dir').value='auto';$('speed').value=5;$('margin').value='auto';$('dz').value=0;$('cross').value='0';$('maxRange').value=500;$('mat').value=60;syncLabel();state.fitted=false;compute();}
+function selfTest(){loadPreset();const s=state;if(!s.plan){$('selfTestOut').textContent='คำนวณไม่ได้';return;}
+ const r=[['จำนวนเส้น',s.plan.lines.length,5],['waypoint',s.plan.photos,80],['ระยะทาง (ม.)',Math.round(s.plan.totalLen),980],['Ls (ม.)',s.d.Ls.toFixed(1),'16.7'],['Ps (ม.)',s.d.Ps.toFixed(1),'12.5']];
+ const ok=r.every(([n,a,e])=>Math.abs(Number(a)-Number(e))<=(n==='ระยะทาง (ม.)'?15:0.15));
+ $('selfTestOut').innerHTML=(ok?'<span style="color:var(--green)">ผ่านทุกข้อ</span> ':'<span style="color:var(--red)">ไม่ผ่าน</span> ')+r.map(([n,a,e])=>n+' '+a+' (เฉลย '+e+')').join(' · ');}
+
+function syncLabel(){$('valLabel').textContent=$('mode').value==='gsd'?'GSD (ซม./px) 0.5–3.0':'ความสูงบิน (ม.) 15–90';}
+function save(){try{const o={};['poly','home','dz','mode','val','front','side','dir','speed','margin','maxRange','cross','mat','mid','tCenter'].forEach(k=>o[k]=$(k).value);localStorage.setItem('m4p-planner',JSON.stringify(o));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('m4p-planner')||'null');if(o)Object.keys(o).forEach(k=>{if($(k))$(k).value=o[k];});}catch(e){}}
+
+const debounced=()=>{clearTimeout(timer);timer=setTimeout(compute,250);};
+['poly','home','dz','mode','val','front','side','dir','speed','margin','maxRange','cross','mat'].forEach(k=>{$(k).addEventListener('input',debounced);$(k).addEventListener('change',debounced);});
+$('mode').addEventListener('change',()=>{const d=state.d;if(d){$('val').value=$('mode').value==='gsd'?d.gsd.toFixed(2):d.h;}syncLabel();compute();});
+$('btnPreset').addEventListener('click',loadPreset);$('btnSelfTest').addEventListener('click',selfTest);
+$('btnRect').addEventListener('click',()=>{const c=parseLatLon($('rC').value);if(!c)return;setPoly(rectFrom(c,Number($('rW').value)||120,Number($('rD').value)||80,Number($('rB').value)||0));compute();});
+$('btnHomeCorner').addEventListener('click',()=>{const pr=parsePoly($('poly').value);if(pr.pts&&pr.pts.length){$('home').value=pr.pts[0].lat.toFixed(6)+', '+pr.pts[0].lon.toFixed(6);compute();}});
+$('btnHomeGps').addEventListener('click',()=>{if(!navigator.geolocation){$('polyErr').textContent='อุปกรณ์นี้ไม่มี GPS';return;}navigator.geolocation.getCurrentPosition(p=>{$('home').value=p.coords.latitude.toFixed(6)+', '+p.coords.longitude.toFixed(6);compute();},()=>{$('polyErr').textContent='อ่าน GPS ไม่ได้ กรอกเองแทน';});});
+$('kmlFile').addEventListener('change',async ev=>{const f=ev.target.files[0];if(!f)return;let text='';if(/\.kmz$/i.test(f.name)){try{const z=await JSZip.loadAsync(f);const name=Object.keys(z.files).find(n=>/\.kml$/i.test(n));text=name?await z.files[name].async('string'):'';}catch(e){}}else text=await f.text();const pts=parseKml(text);if(!pts||pts.length<3){$('polyErr').textContent='อ่านรูปหลายเหลี่ยมจากไฟล์ไม่ได้';return;}setPoly(pts);compute();});
+$('btnExport').addEventListener('click',exportAll);
+load();syncLabel();if(!$('mid').value)$('mid').value=autoId();compute();
+})();
+</script>
+</body>
+</html>
